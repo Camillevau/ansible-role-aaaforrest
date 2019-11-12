@@ -1,0 +1,33 @@
+---
+# tasks file for camillevau.aaaforest
+
+- name: download AAAforREST
+  git:
+    repo: 'https://github.com/Hypertopic/AAAforREST.git'
+    dest: /opt/AAAforREST
+  
+- name: add AAAforREST template
+  template:
+    src: "{{custom_config_template}}"
+    dest: /opt/AAAforREST/conf/config.json
+    owner: root
+    group: root
+    mode: 0600
+  when: custom_config_template is defined
+
+#      mkdir log
+- name: AAAforREST node module
+  npm:
+    path: /opt/AAAforREST
+
+- name: "Install forever (to run Node.js app)."
+  npm: name=forever global=yes state=present
+  
+- name: "Check list of Node.js apps running."
+  command: forever list
+  register: forever_list
+  changed_when: false
+
+- name: "Start proxy Node.js app."
+  command: forever start /opt/AAAforREST/app/proxy.js
+  when: "forever_list.stdout.find('/opt/AAAforREST/app/proxy.js') == -1"
